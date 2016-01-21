@@ -1,0 +1,12 @@
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\RyzeVnG.exe.config
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\RyzeVnG.exe
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\RyzeVnG.pdb
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\LeagueSharp.Common.dll
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\LeagueSharp.dll
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\SharpDX.dll
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\SharpDX.Direct3D9.dll
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\clipper_library.dll
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\bin\Debug\LeagueSharp.Sandbox.dll
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\obj\Debug\RyzeVnG.csprojResolveAssemblyReference.cache
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\obj\Debug\RyzeVnG.exe
+C:\Users\Admin\Desktop\experiment\RyzeVnG\RyzeVnG\obj\Debug\RyzeVnG.pdb
