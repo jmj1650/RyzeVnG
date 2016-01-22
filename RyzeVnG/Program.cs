@@ -80,8 +80,9 @@ namespace vengee_s_Ryze
 
             LaneMenu.AddItem(new MenuItem("Mana", "Mana Manager").SetValue(new Slider(0, 0, 100)));
 
-            MiscMenu.AddItem(new MenuItem("GapW", "Anti gapcloser with W").SetValue(false));
-            MiscMenu.AddItem(new MenuItem("EC", "combo logic").SetValue(true));;
+            MiscMenu.AddItem(new MenuItem("GapW", "W on AntiGap with smooth combo").SetValue(true));
+            MiscMenu.AddItem(new MenuItem("FGapW","Force W Gapcloser").SetValue(false));
+            MiscMenu.AddItem(new MenuItem("EC", "combo logic").SetValue(true)); ;
 
             DrawMenu.AddItem(new MenuItem("DAO", "Draw All Off").SetValue(false));
             DrawMenu.AddItem(new MenuItem("QD", "Draw Q").SetValue(true));
@@ -95,7 +96,7 @@ namespace vengee_s_Ryze
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnUpdate += Game_OnUpdate;
             Orbwalking.BeforeAttack += Beforeattack;
-            
+
 
             Notifications.AddNotification("RyzeVnG", 5000);
             Game.PrintChat("<font color = '#00ffa8'>RyzeVnG Loaded! by vengee</font>");
@@ -112,7 +113,7 @@ namespace vengee_s_Ryze
             var TargetE = TargetSelector.GetTarget(600, TargetSelector.DamageType.Magical);
             var Target = TargetSelector.GetTarget(800, TargetSelector.DamageType.Magical);
             var TargetM = MinionManager.GetMinions(600, MinionTypes.All, MinionTeam.NotAlly);
- 
+
             var EC = Menu.SubMenu("Misc").Item("EC").GetValue<bool>();
 
             if (RyzePassive != null)
@@ -123,52 +124,53 @@ namespace vengee_s_Ryze
             {
                 Stack = 0;
             }
-            
-                if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+            {
+                if (W.IsReady() && W.Level >= 1)
                 {
-                    if (W.IsReady() && W.Level >= 1)
+                    Orbwalker.SetAttack(false);
+                }
+                if (Ryzepassivecharged == null)
+                {
+                    if (Stack == 0 && (TargetW.Health <= Player.GetAutoAttackDamage(Target) + RyzeQ(Target) + RyzeE(Target) + RyzeW(Target)))
                     {
-                        Orbwalker.SetAttack(false);
-                    }
-                    if (Ryzepassivecharged == null)
-                    {
-                        if (Stack == 0 && (TargetW.Health <= Player.GetAutoAttackDamage(Target) + RyzeQ(Target) + RyzeE(Target) + RyzeW(Target)))
+                        if (W.IsReady() && Target.IsValidTarget(W.Range))
                         {
-                            if (W.IsReady() && Target.IsValidTarget(W.Range))
-                            {
-                                W.CastOnUnit(TargetE);
-                            }
-                            if (E.IsReady() && Target.IsValidTarget(E.Range))
-                            {
-                                E.CastOnUnit(TargetE);
-                            }
-                            if (Q.IsReady() && Target.IsValidTarget(Q.Range))
-                            {
-                                Q.CastOnUnit(TargetE);
-                            }
-                            if(W.Cooldown >= 4.5)
-                            Orbwalker.SetAttack(true);
+                            W.CastOnUnit(TargetE);
                         }
-                        Orbwalker.SetAttack(true);
+                        if (E.IsReady() && Target.IsValidTarget(E.Range))
+                        {
+                            E.CastOnUnit(TargetE);
+                        }
+                        if (Q.IsReady() && Target.IsValidTarget(Q.Range))
+                        {
+                            Q.CastOnUnit(TargetE);
+                        }
+                        if (W.Cooldown >= 4.5)
+                            Orbwalker.SetAttack(true);
                     }
-                if(EC)
+                    Orbwalker.SetAttack(true);
+                }
+                if (EC)
                 {
                     if (Ryzepassivecharged == null)
                     {
                         if (Stack < 5)
                         {
-                                if (Q.IsReady() && W.IsReady() && E.IsReady() && R.IsReady() && TargetQ.IsValidTarget(Q.Range) && Stack == 1)
-                                {
-                                    R.CastOnUnit(Player);
-                                    E.CastOnUnit(TargetE);
-                                    Q.CastOnUnit(TargetQ);
-                                    W.CastOnUnit(TargetW);
-                                    return;
-                                }
+                            if (Q.IsReady() && W.IsReady() && E.IsReady() && R.IsReady() && TargetQ.IsValidTarget(W.Range) && Stack == 1)
+                            {
+                                R.CastOnUnit(Player);
+                                E.CastOnUnit(TargetE);
+                                Q.CastOnUnit(TargetQ);
+                                W.CastOnUnit(TargetW);
+                                return;
+                            }
+
+                            if (W.IsReady() && TargetW.IsValidTarget(W.Range) && (Stack <= 2 || (Stack == 3 && Q.IsReady() && (E.Cooldown <= 3.0 || R.Cooldown <= 3.0)) || (Stack == 4 && (E.Cooldown <= 5.5 || R.Cooldown <= 5.5))))
+                                W.CastOnUnit(TargetW);
                             if (E.IsReady() && TargetW.IsValidTarget(W.Range) && (Stack <= 2 || (((Stack == 3 && Q.IsReady()) || Stack == 4) && ((W.Cooldown < 3.0 || R.Cooldown < 3.0) || ((W.Cooldown < 5.5 || R.Cooldown < 5.5) && Q.Cooldown < 2.6)))))
                                 E.CastOnUnit(TargetW);
-                            if (W.IsReady() && TargetW.IsValidTarget(W.Range) && (Stack <= 2 || (Stack == 3 && Q.IsReady() && (E.Cooldown <= 3.0 || R.Cooldown <= 3.0)) || (Stack == 4 && (E.Cooldown <= 5.5 || R.Cooldown <= 5.5))))                                
-                                W.CastOnUnit(TargetW);
                             if (Q.IsReady() && TargetW.IsValidTarget(Q.Range) && ((Stack != 4 || ((TargetW.IsValidTarget(W.Range) && (E.Cooldown < 2.6 || W.Cooldown < 2.6 || R.Cooldown < 2.6))))))
                                 Q.CastOnUnit(TargetW);
                             if (R.IsReady() && TargetW.IsValidTarget(675) && ((Stack >= 1 && W.IsReady()) || Stack == 4))
@@ -176,16 +178,16 @@ namespace vengee_s_Ryze
                                 R.CastOnUnit(Player);
                                 return;
                             }
-                            if(!W.IsReady())
+                            if (!W.IsReady())
                                 Orbwalker.SetAttack(true);
                         }
 
                     }
-                    if(Ryzepassivecharged != null)
+                    if (Ryzepassivecharged != null)
                     {
-                        if (TargetW.IsValidTarget(W.Range+20) && Q.IsReady())
+                        if (TargetW.IsValidTarget(W.Range + 20) && Q.IsReady())
                         {
-                            if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.0)
+                            if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 0.7)
                                 return;
                             Q.CastOnUnit(TargetW);
                             return;
@@ -201,7 +203,7 @@ namespace vengee_s_Ryze
                         }
                         if (TargetW.IsValidTarget(W.Range) && W.IsReady())
                         {
-                            if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.5)
+                            if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.3)
                                 return;
                             W.CastOnUnit(TargetW);
                             if (TargetW.IsValidTarget(W.Range + 20) && Q.IsReady())
@@ -218,9 +220,9 @@ namespace vengee_s_Ryze
 
                     }
                 }
-                
 
-                if(!EC)
+
+                if (!EC)
                 {
                     if (Stack == 0)
                         if (Ryzepassivecharged == null)
@@ -323,7 +325,7 @@ namespace vengee_s_Ryze
                         {
                             Q.CastOnUnit(TargetW);
                             return;
-                        }                            
+                        }
                         if (TargetW.IsValidTarget(Q.Range) && R.IsReady())
                         {
                             R.CastOnUnit(Player);
@@ -348,15 +350,15 @@ namespace vengee_s_Ryze
                     }
                 }
             }
-                else
-                    Orbwalker.SetAttack(true);
+            else
+                Orbwalker.SetAttack(true);
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
             {
                 var mana = Menu.SubMenu("Harass").Item("Mana").GetValue<Slider>().Value;
                 if (mana > Player.ManaPercent)
                     return;
                 if (Q.IsReady() && TargetQ.IsValidTarget(Q.Range) && Menu.SubMenu("Harass").Item("QH").GetValue<bool>())
-                    Q.CastOnUnit(TargetQ);
+                    Q.CastIfWillHit(TargetQ);
                 if (E.IsReady() && TargetE.IsValidTarget(E.Range) && Menu.SubMenu("Harass").Item("EH").GetValue<bool>())
                 {
                     E.CastOnUnit(TargetE);
@@ -405,7 +407,7 @@ namespace vengee_s_Ryze
                         {
                             if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
                             {
-                                if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.0)
+                                if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 0.7)
                                     return;
                                 Q.CastOnUnit(minion, true);
                                 return;
@@ -421,7 +423,7 @@ namespace vengee_s_Ryze
                             }
                             if (minion.IsValidTarget(W.Range) && W.IsReady())
                             {
-                                if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.5)
+                                if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.3)
                                     return;
                                 W.CastOnUnit(minion, true);
                                 if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
@@ -436,7 +438,7 @@ namespace vengee_s_Ryze
                                 return;
                             }
 
-                       
+
 
                         }
                     }
@@ -446,17 +448,17 @@ namespace vengee_s_Ryze
 
         public static void Beforeattack(Orbwalking.BeforeAttackEventArgs args)
         {
-          /*  if (args.Unit.IsMe)
-            {
-                if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
-                {
-                    if (Q.IsReady() || W.IsReady() || E.IsReady())
-                        args.Process = false;
-                    else
-                        args.Process = true;
-                }
-            }
-           */
+            /*  if (args.Unit.IsMe)
+              {
+                  if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+                  {
+                      if (Q.IsReady() || W.IsReady() || E.IsReady())
+                          args.Process = false;
+                      else
+                          args.Process = true;
+                  }
+              }
+             */
         }
 
         public static void Drawing_OnDraw(EventArgs args)
@@ -538,9 +540,45 @@ namespace vengee_s_Ryze
         {
             if (!Program.Player.IsDead && Menu.SubMenu("Misc").Item("GapW").GetValue<bool>() && Program.W.CanCast(gapcloser.Sender))
             {
-                W.CastOnUnit(gapcloser.Sender);
+                if (Ryzepassivecharged == null)
+                {
+                    if (Stack < 5)
+                    {
+                        if (Q.IsReady() && W.IsReady() && E.IsReady() && R.IsReady() && gapcloser.Sender.IsValidTarget(W.Range) && Stack == 1)
+                        {
+                            W.CastOnUnit(gapcloser.Sender);
+                            return;
+                        }
+                        if (W.IsReady() && gapcloser.Sender.IsValidTarget(W.Range) && (Stack <= 2 || (Stack == 3 && Q.IsReady() && (E.Cooldown <= 3.0 || R.Cooldown <= 3.0)) || (Stack == 4 && (E.Cooldown <= 5.5 || R.Cooldown <= 5.5))))
+                            W.CastOnUnit(gapcloser.Sender);
+
+                        if (W.IsReady() && gapcloser.Sender.IsValidTarget(W.Range) && Menu.SubMenu("Misc").Item("FGapW").GetValue<bool>())
+                        {
+                            W.CastOnUnit(gapcloser.Sender);
+                        }
+                    }
+                    if (Ryzepassivecharged != null)
+                    {
+                        if (gapcloser.Sender.IsValidTarget(W.Range + 20) && Q.IsReady())
+                        {
+                            if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 0.7)
+                                return;
+                            Q.CastOnUnit(gapcloser.Sender);
+                            return;
+                        }
+                        if (gapcloser.Sender.IsValidTarget(W.Range) && W.IsReady())
+                        {
+                            if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.3)
+                                return;
+                            W.CastOnUnit(gapcloser.Sender);
+                            if (gapcloser.Sender.IsValidTarget(W.Range + 20) && Q.IsReady())
+                                Q.CastOnUnit(gapcloser.Sender);
+                            return;
+                        }
+
+                    }
+                }
             }
         }
-
     }
 }
