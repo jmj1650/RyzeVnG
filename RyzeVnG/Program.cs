@@ -8,7 +8,7 @@ using LeagueSharp.Common;
 using Color = System.Drawing.Color;
 
 
-namespace vengee_s_Ryze
+namespace RyzeVnG
 {
     class Program
     {
@@ -69,16 +69,24 @@ namespace vengee_s_Ryze
             TargetSelector.AddToMenu(ts);
             Menu HarassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
             Menu LaneMenu = Menu.AddSubMenu(new Menu("Lane/ JungleClear", "LaneClear"));
+            Menu LasthitMenu = Menu.AddSubMenu(new Menu("Last Hit", "lasthit"));
             Menu MiscMenu = Menu.AddSubMenu(new Menu("Misc", "Misc"));
             Menu DrawMenu = Menu.AddSubMenu(new Menu("Drawing", "Draw"));
+            
 
 
             HarassMenu.AddItem(new MenuItem("QH", "Use Q").SetValue(true));
             HarassMenu.AddItem(new MenuItem("EH", "Use E").SetValue(true));
             HarassMenu.AddItem(new MenuItem("Mana", "Mana Manager").SetValue(new Slider(0, 0, 100)));
 
-
+            LaneMenu.AddItem(new MenuItem("QL", "UseQ").SetValue(true));
+            LaneMenu.AddItem(new MenuItem("WL", "UseW").SetValue(true));
+            LaneMenu.AddItem(new MenuItem("EL", "UseE").SetValue(true));
+            LaneMenu.AddItem(new MenuItem("RL", "UseR").SetValue(true));
+            LaneMenu.AddItem(new MenuItem("BL", "Burster").SetValue(true));
             LaneMenu.AddItem(new MenuItem("Mana", "Mana Manager").SetValue(new Slider(0, 0, 100)));
+
+            LasthitMenu.AddItem(new MenuItem("QL", "Q Last Hit").SetValue(true));
 
             MiscMenu.AddItem(new MenuItem("GapW", "W on AntiGap with smooth combo").SetValue(true));
             MiscMenu.AddItem(new MenuItem("FGapW","Force W Gapcloser").SetValue(false));
@@ -113,7 +121,12 @@ namespace vengee_s_Ryze
             var TargetE = TargetSelector.GetTarget(600, TargetSelector.DamageType.Magical);
             var Target = TargetSelector.GetTarget(800, TargetSelector.DamageType.Magical);
             var TargetM = MinionManager.GetMinions(600, MinionTypes.All, MinionTeam.NotAlly);
-
+            var QL = Menu.SubMenu("LaneClear").Item("QL").GetValue<bool>();
+            var WL = Menu.SubMenu("LaneClear").Item("WL").GetValue<bool>();
+            var EL = Menu.SubMenu("LaneClear").Item("EL").GetValue<bool>();
+            var RL = Menu.SubMenu("LaneClear").Item("RL").GetValue<bool>();
+            var BL = Menu.SubMenu("LaneClear").Item("BL").GetValue<bool>();
+            var QLL = Menu.SubMenu("lasthit").Item("QL").GetValue<bool>();
             var EC = Menu.SubMenu("Misc").Item("EC").GetValue<bool>();
 
             if (RyzePassive != null)
@@ -160,11 +173,26 @@ namespace vengee_s_Ryze
                         {
                             if (Q.IsReady() && W.IsReady() && E.IsReady() && R.IsReady() && TargetQ.IsValidTarget(W.Range) && Stack == 1)
                             {
-                                R.CastOnUnit(Player);
+                                W.CastOnUnit(TargetW);
                                 E.CastOnUnit(TargetE);
                                 Q.CastOnUnit(TargetQ);
-                                W.CastOnUnit(TargetW);
+                                R.CastOnUnit(Player);
                                 return;
+                            }
+                            if (Q.IsReady() && E.IsReady() && W.IsReady() && R.IsReady() && TargetW.IsValidTarget(W.Range) && Stack == 2)
+                            {
+                                if (Q.IsReady())
+                                {
+                                    W.CastOnUnit(TargetW);
+                                    Q.CastOnUnit(TargetW);
+                                    E.CastOnUnit(TargetW);
+                                    Q.CastOnUnit(TargetW);
+                                    R.CastOnUnit(Player);
+                                    Q.CastOnUnit(TargetW);
+                                    E.CastOnUnit(TargetW);
+                                    Q.CastOnUnit(TargetW);
+                                    return;
+                                }
                             }
 
                             if (W.IsReady() && TargetW.IsValidTarget(W.Range) && (Stack <= 2 || (Stack == 3 && Q.IsReady() && (E.Cooldown <= 3.0 || R.Cooldown <= 3.0)) || (Stack == 4 && (E.Cooldown <= 5.5 || R.Cooldown <= 5.5))))
@@ -185,7 +213,7 @@ namespace vengee_s_Ryze
                     }
                     if (Ryzepassivecharged != null)
                     {
-                        if (TargetW.IsValidTarget(W.Range + 20) && Q.IsReady())
+                        if (TargetW.IsValidTarget(W.Range) && Q.IsReady())
                         {
                             if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 0.7)
                                 return;
@@ -206,14 +234,14 @@ namespace vengee_s_Ryze
                             if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.3)
                                 return;
                             W.CastOnUnit(TargetW);
-                            if (TargetW.IsValidTarget(W.Range + 20) && Q.IsReady())
+                            if (TargetW.IsValidTarget(W.Range) && Q.IsReady())
                                 Q.CastOnUnit(TargetW);
                             return;
                         }
-                        if (TargetW.IsValidTarget(E.Range) && E.IsReady())
+                        if (TargetW.IsValidTarget(W.Range) && E.IsReady())
                         {
                             E.CastOnUnit(TargetW);
-                            if (TargetW.IsValidTarget(W.Range + 20) && Q.IsReady())
+                            if (TargetW.IsValidTarget(W.Range) && Q.IsReady())
                                 Q.CastOnUnit(TargetW);
                             return;
                         }
@@ -379,21 +407,13 @@ namespace vengee_s_Ryze
                         {
                             if (Stack < 5)
                             {
-                                if (Q.IsReady() && W.IsReady() && E.IsReady() && R.IsReady() && minion.IsValidTarget(Q.Range) && Stack == 1)
-                                {
-                                    R.CastOnUnit(Player);
+                                if (EL && E.IsReady() && minion.IsValidTarget(W.Range) && (Stack <= 2 || (((Stack == 3 && Q.IsReady()) || Stack == 4) && ((W.Cooldown < 3.0 || R.Cooldown < 3.0) || ((W.Cooldown < 5.5 || R.Cooldown < 5.5) && Q.Cooldown < 2.6)))))
                                     E.CastOnUnit(minion, true);
-                                    Q.CastOnUnit(minion, true);
+                                if (WL && W.IsReady() && minion.IsValidTarget(W.Range) && (Stack <= 2 || (Stack == 3 && Q.IsReady() && (E.Cooldown <= 3.0 || R.Cooldown <= 3.0)) || (Stack == 4 && (E.Cooldown <= 5.5 || R.Cooldown <= 5.5))))
                                     W.CastOnUnit(minion, true);
-                                    return;
-                                }
-                                if (E.IsReady() && minion.IsValidTarget(W.Range) && (Stack <= 2 || (((Stack == 3 && Q.IsReady()) || Stack == 4) && ((W.Cooldown < 3.0 || R.Cooldown < 3.0) || ((W.Cooldown < 5.5 || R.Cooldown < 5.5) && Q.Cooldown < 2.6)))))
-                                    E.CastOnUnit(minion, true);
-                                if (W.IsReady() && minion.IsValidTarget(W.Range) && (Stack <= 2 || (Stack == 3 && Q.IsReady() && (E.Cooldown <= 3.0 || R.Cooldown <= 3.0)) || (Stack == 4 && (E.Cooldown <= 5.5 || R.Cooldown <= 5.5))))
-                                    W.CastOnUnit(minion, true);
-                                if (Q.IsReady() && minion.IsValidTarget(Q.Range) && ((Stack != 4 || ((minion.IsValidTarget(W.Range) && (E.Cooldown < 2.6 || W.Cooldown < 2.6 || R.Cooldown < 2.6))))))
+                                if (QL && Q.IsReady() && minion.IsValidTarget(Q.Range) && ((Stack != 4 || ((minion.IsValidTarget(W.Range) && (E.Cooldown < 2.6 || W.Cooldown < 2.6 || R.Cooldown < 2.6))))))
                                     Q.CastOnUnit(minion, true);
-                                if (R.IsReady() && minion.IsValidTarget(675) && ((Stack >= 1 && W.IsReady()) || Stack == 4))
+                                if (RL && R.IsReady() && minion.IsValidTarget(675) && ((Stack >= 1 && W.IsReady()) || Stack == 4))
                                 {
                                     R.CastOnUnit(Player);
                                     return;
@@ -405,41 +425,68 @@ namespace vengee_s_Ryze
                         }
                         if (Ryzepassivecharged != null)
                         {
-                            if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
+                            if (BL)
                             {
-                                if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 0.7)
-                                    return;
-                                Q.CastOnUnit(minion, true);
-                                return;
-                            }
-                            if (minion.IsValidTarget(650) && R.IsReady())
-                            {
-                                if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 4.0)
-                                    return;
-                                R.CastOnUnit(Player);
                                 if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
+                                {
+                                    if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 0.7)
+                                        return;
                                     Q.CastOnUnit(minion, true);
-                                return;
-                            }
-                            if (minion.IsValidTarget(W.Range) && W.IsReady())
-                            {
-                                if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.3)
                                     return;
-                                W.CastOnUnit(minion, true);
-                                if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
-                                    Q.CastOnUnit(minion, true);
-                                return;
-                            }
-                            if (minion.IsValidTarget(E.Range) && E.IsReady())
-                            {
-                                E.CastOnUnit(minion, true);
-                                if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
-                                    Q.CastOnUnit(minion, true);
-                                return;
+                                }
+                                if (minion.IsValidTarget(650) && R.IsReady())
+                                {
+                                    if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 4.0)
+                                        return;
+                                    R.CastOnUnit(Player);
+                                    if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
+                                        Q.CastOnUnit(minion, true);
+                                    return;
+                                }
+                                if (minion.IsValidTarget(W.Range) && W.IsReady())
+                                {
+                                    if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 1.3)
+                                        return;
+                                    W.CastOnUnit(minion, true);
+                                    if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
+                                        Q.CastOnUnit(minion, true);
+                                    return;
+                                }
+                                if (minion.IsValidTarget(E.Range) && E.IsReady())
+                                {
+                                    E.CastOnUnit(minion, true);
+                                    if (minion.IsValidTarget(W.Range + 20) && Q.IsReady())
+                                        Q.CastOnUnit(minion, true);
+                                    return;
+                                }
                             }
 
 
+                        }
+                    }
+                }
+            }
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
+            {
+                var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy,MinionOrderTypes.Health);
+                if (TargetM != null && Menu.SubMenu("LaneClear").Item("Mana").GetValue<Slider>().Value < Player.ManaPercent)
+                {
+                    foreach (var minion in TargetM)
+                    {
+                        if (Ryzepassivecharged == null && Stack < 4 && QLL)
+                        {
+                            if(minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
+                            {
+                                Q.Cast(minion, true);
+                            }
 
+                        }
+                        if (Ryzepassivecharged != null && QLL)
+                        {
+                            if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
+                            {
+                                Q.Cast(minion, true);
+                            }
                         }
                     }
                 }
