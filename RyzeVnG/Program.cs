@@ -89,11 +89,11 @@ namespace RyzeVnG
             LaneMenu.AddItem(new MenuItem("BL", "Burster").SetValue(true));
             LaneMenu.AddItem(new MenuItem("Mana", "Mana Manager").SetValue(new Slider(0, 0, 100)));
 
-            LasthitMenu.AddItem(new MenuItem("QL", "Q Last Hit").SetValue(true));
+            LasthitMenu.AddItem(new MenuItem("QL", "Q Last Hit").SetValue(new KeyBind('A',KeyBindType.Press,false)));
 
             MiscMenu.AddItem(new MenuItem("GapW", "W on AntiGap with smooth combo").SetValue(true));
             MiscMenu.AddItem(new MenuItem("FGapW","Force W Gapcloser").SetValue(false));
-            MiscMenu.AddItem(new MenuItem("EC", "combo logic").SetValue(true)); ;
+            MiscMenu.AddItem(new MenuItem("EC", "combo logic").SetValue(true));
 
             DrawMenu.AddItem(new MenuItem("DAO", "Draw All Off").SetValue(false));
             DrawMenu.AddItem(new MenuItem("QD", "Draw Q").SetValue(true));
@@ -134,7 +134,6 @@ namespace RyzeVnG
             var EL = Menu.SubMenu("LaneClear").Item("EL").GetValue<bool>();
             var RL = Menu.SubMenu("LaneClear").Item("RL").GetValue<bool>();
             var BL = Menu.SubMenu("LaneClear").Item("BL").GetValue<bool>();
-            var QLL = Menu.SubMenu("lasthit").Item("QL").GetValue<bool>();
             var EC = Menu.SubMenu("Misc").Item("EC").GetValue<bool>();
 
             if (RyzePassive != null)
@@ -484,14 +483,12 @@ namespace RyzeVnG
                     }
                 }
             }
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
-            {
-                var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-                if (TargetM != null && Menu.SubMenu("LaneClear").Item("Mana").GetValue<Slider>().Value < Player.ManaPercent)
+                if (TargetM != null && Menu.SubMenu("lasthit").Item("QL").GetValue<KeyBind>().Active)
                 {
+                    Orbwalker.SetAttack(false);
                     foreach (var minion in TargetM)
                     {
-                        if (Ryzepassivecharged == null && Stack < 4 && QLL)
+                        if (Ryzepassivecharged == null && Stack < 4)
                         {
                             if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
                             {
@@ -499,7 +496,7 @@ namespace RyzeVnG
                             }
 
                         }
-                        if (Ryzepassivecharged != null && QLL)
+                        if (Ryzepassivecharged != null)
                         {
                             if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
                             {
@@ -507,8 +504,8 @@ namespace RyzeVnG
                             }
                         }
                     }
+                    Orbwalker.SetAttack(true);
                 }
-            }
         }
         public static void Beforeattack(Orbwalking.BeforeAttackEventArgs args)
         {
