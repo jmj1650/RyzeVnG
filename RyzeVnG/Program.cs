@@ -89,7 +89,7 @@ namespace RyzeVnG
             LaneMenu.AddItem(new MenuItem("BL", "Burster").SetValue(true));
             LaneMenu.AddItem(new MenuItem("Mana", "Mana Manager").SetValue(new Slider(0, 0, 100)));
 
-            LasthitMenu.AddItem(new MenuItem("QL", "Q Last Hit").SetValue(new KeyBind('A',KeyBindType.Press,false)));
+            LasthitMenu.AddItem(new MenuItem("QL", "Q Last Hit").SetValue(new KeyBind('T',KeyBindType.Toggle,false)));
 
             MiscMenu.AddItem(new MenuItem("GapW", "W on AntiGap with smooth combo").SetValue(true));
             MiscMenu.AddItem(new MenuItem("FGapW","Force W Gapcloser").SetValue(false));
@@ -483,6 +483,7 @@ namespace RyzeVnG
                     }
                 }
             }
+            if(Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
                 if (TargetM != null && Menu.SubMenu("lasthit").Item("QL").GetValue<KeyBind>().Active)
                 {
                     Orbwalker.SetAttack(false);
