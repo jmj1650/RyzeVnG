@@ -30,6 +30,8 @@ namespace RyzeVnG
 
         public static int Stack = 0;
 
+        public static float SpeedTime = 0;
+
         public static double RyzeQ(Obj_AI_Base Target)
         {
             { return Player.GetSpellDamage(Target, SpellSlot.Q); }
@@ -67,6 +69,7 @@ namespace RyzeVnG
             Orbwalker = new Orbwalking.Orbwalker(orbwalkerMenu);
             Menu ts = Menu.AddSubMenu(new Menu("Target Selector", "Target Selector")); ;
             TargetSelector.AddToMenu(ts);
+            Menu ComboMenu = Menu.AddSubMenu(new Menu("ComboSpeed", "Combospd"));
             Menu HarassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
             Menu LaneMenu = Menu.AddSubMenu(new Menu("Lane/ JungleClear", "LaneClear"));
             Menu LasthitMenu = Menu.AddSubMenu(new Menu("Last Hit", "lasthit"));
@@ -91,11 +94,17 @@ namespace RyzeVnG
             MiscMenu.AddItem(new MenuItem("GapW", "W on AntiGap with smooth combo").SetValue(true));
             MiscMenu.AddItem(new MenuItem("FGapW","Force W Gapcloser").SetValue(false));
             MiscMenu.AddItem(new MenuItem("EC", "combo logic").SetValue(true)); ;
+            MiscMenu.AddItem(new MenuItem("SC", "Smart Stack Charger").SetValue(new KeyBind('G',KeyBindType.Toggle,true)));
+            MiscMenu.AddItem(new MenuItem("Mana", "Stack Charger Mana Manager").SetValue(new Slider(70, 0, 100)));
 
             DrawMenu.AddItem(new MenuItem("DAO", "Draw All Off").SetValue(false));
             DrawMenu.AddItem(new MenuItem("QD", "Draw Q").SetValue(true));
             DrawMenu.AddItem(new MenuItem("WD", "Draw W").SetValue(true));
             DrawMenu.AddItem(new MenuItem("ED", "Draw E").SetValue(true));
+
+            ComboMenu.AddItem(new MenuItem("Speed", "Combo Speed").SetValue(new StringList(new[] { "Insane", "Fast", "Nomal", "Random" })));
+
+
 
 
             Menu.AddToMainMenu();
@@ -104,6 +113,7 @@ namespace RyzeVnG
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnUpdate += Game_OnUpdate;
             Orbwalking.BeforeAttack += Beforeattack;
+            Obj_AI_Base.OnProcessSpellCast += OnProcessSpell;
 
 
             Notifications.AddNotification("RyzeVnG", 5000);
@@ -140,6 +150,9 @@ namespace RyzeVnG
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
             {
+                if (SpeedTime > Environment.TickCount)
+                    return;
+
                 if (W.IsReady() && W.Level >= 1)
                 {
                     Orbwalker.SetAttack(false);
@@ -382,11 +395,13 @@ namespace RyzeVnG
                 Orbwalker.SetAttack(true);
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Mixed)
             {
+                if (SpeedTime > Environment.TickCount)
+                    return;
                 var mana = Menu.SubMenu("Harass").Item("Mana").GetValue<Slider>().Value;
                 if (mana > Player.ManaPercent)
                     return;
                 if (Q.IsReady() && TargetQ.IsValidTarget(Q.Range) && Menu.SubMenu("Harass").Item("QH").GetValue<bool>())
-                    Q.CastIfWillHit(TargetQ);
+                    Q.CastOnUnit(TargetQ);
                 if (E.IsReady() && TargetE.IsValidTarget(E.Range) && Menu.SubMenu("Harass").Item("EH").GetValue<bool>())
                 {
                     E.CastOnUnit(TargetE);
@@ -397,6 +412,8 @@ namespace RyzeVnG
 
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear)
             {
+                if (SpeedTime > Environment.TickCount)
+                    return;
                 if (TargetM != null && Menu.SubMenu("LaneClear").Item("Mana").GetValue<Slider>().Value < Player.ManaPercent)
                 {
                     foreach (var minion in TargetM)
@@ -434,7 +451,7 @@ namespace RyzeVnG
                                     Q.CastOnUnit(minion, true);
                                     return;
                                 }
-                                if (minion.IsValidTarget(650) && R.IsReady())
+                                if (RL && minion.IsValidTarget(650) && R.IsReady())
                                 {
                                     if (R.Level == 3 && Ryzepassivecharged.EndTime - Game.ClockTime <= 4.0)
                                         return;
@@ -468,14 +485,14 @@ namespace RyzeVnG
             }
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
-                var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy,MinionOrderTypes.Health);
+                var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
                 if (TargetM != null && Menu.SubMenu("LaneClear").Item("Mana").GetValue<Slider>().Value < Player.ManaPercent)
                 {
                     foreach (var minion in TargetM)
                     {
                         if (Ryzepassivecharged == null && Stack < 4 && QLL)
                         {
-                            if(minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
+                            if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
                             {
                                 Q.Cast(minion, true);
                             }
@@ -491,8 +508,89 @@ namespace RyzeVnG
                     }
                 }
             }
-        }
+            if (Menu.SubMenu("Misc").Item("Mana").GetValue<Slider>().Value > Player.ManaPercent && Menu.SubMenu("Misc").Item("SC").GetValue<KeyBind>().Active)
+            {
+                var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
+                if (W.IsReady() && E.IsReady() && R.IsReady() && (Stack == 0 || Stack == 1) && RyzePassive.EndTime - Game.ClockTime < 0.8)
+                {
+                    if (LM != null)
+                    {
+                        foreach (var minion in TargetM)
+                        {
+                            if (Ryzepassivecharged == null)
+                            {
+                                if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range) && Q.IsReady())
+                                {
+                                    Q.Cast(minion, true);
+                                }
 
+                            }
+                        }
+                    }
+                    else if (TargetQ != null && TargetQ.IsValidTarget(Q.Range))
+                    {
+                        if (Q.IsReady())
+                            Q.CastOnUnit(TargetQ);
+                    }
+                    else
+                    {
+                        Q.Cast(Game.CursorPos);
+                    }
+                }
+                else if ((W.IsReady() || R.IsReady()) && E.IsReady() && (Stack == 1 || Stack == 2) && RyzePassive.EndTime - Game.ClockTime < 0.8)
+                {
+                    if (LM != null)
+                    {
+                        foreach (var minion in TargetM)
+                        {
+                            if (Ryzepassivecharged == null)
+                            {
+                                if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range) && Q.IsReady())
+                                {
+                                    Q.Cast(minion, true);
+                                }
+
+                            }
+                        }
+                    }
+                    else if (TargetQ != null && TargetQ.IsValidTarget(Q.Range))
+                    {
+                        if (Q.IsReady())
+                            Q.CastOnUnit(TargetQ);
+                    }
+                    else
+                    {
+                        Q.Cast(Game.CursorPos);
+                    }
+                }
+                else if ((W.IsReady() || R.IsReady() || (E.IsReady() && (R.Cooldown < 7.5 || W.Cooldown < 7.5)) && Stack == 2) || ((W.IsReady() || R.IsReady()) || (E.IsReady() && (R.Cooldown < 5.0 || W.Cooldown < 5.0) && Stack == 3)) && RyzePassive.EndTime - Game.ClockTime < 0.8)
+                {
+                    if (LM != null)
+                    {
+                        foreach (var minion in TargetM)
+                        {
+                            if (Ryzepassivecharged == null)
+                            {
+                                if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range) && Q.IsReady())
+                                {
+                                    Q.Cast(minion, true);
+                                }
+
+                            }
+                        }
+                    }
+                    else if (TargetQ != null && TargetQ.IsValidTarget(Q.Range))
+                    {
+                        if (Q.IsReady())
+                            Q.CastOnUnit(TargetQ);
+                    }
+                    else
+                    {
+                        Q.Cast(Game.CursorPos);
+                    }
+                }
+            }
+        }
         public static void Beforeattack(Orbwalking.BeforeAttackEventArgs args)
         {
             /*  if (args.Unit.IsMe)
@@ -627,5 +725,42 @@ namespace RyzeVnG
                 }
             }
         }
+        private static void OnProcessSpell(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        {
+            try
+            {
+                if (sender.IsMe)
+                {
+                    switch (Menu.SubMenu("Combospd").Item("Speed").GetValue<StringList>().SelectedIndex)
+                    {
+                        case 0:
+                            break;
+                        case 1:
+                            SpeedTime = TickCount(200);
+                            break;
+                        case 2:
+                            SpeedTime = TickCount(400);
+                            break;
+                        case 3:
+                            var ran = new Random().Next(0, 2);
+                            if (ran == 1)
+                                SpeedTime = TickCount(325);
+                            else if (ran == 2)
+                                SpeedTime = TickCount(475);
+                            break;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Write(e);
+                Game.PrintChat("It's seem somethings wrong, it's not notice you normally, plz send pm or post to vengee.");
+            }
+        }
+        private static int TickCount(int time)
+        {
+            return Environment.TickCount + time;
+        }
     }
+
 }
