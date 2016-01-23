@@ -71,12 +71,13 @@ namespace RyzeVnG
             TargetSelector.AddToMenu(ts);
             Menu ComboMenu = Menu.AddSubMenu(new Menu("ComboSpeed", "Combospd"));
             Menu HarassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
+            Menu HitMenu = Menu.AddSubMenu(new Menu("Last Hit", "LH"));
             Menu LaneMenu = Menu.AddSubMenu(new Menu("Lane/ JungleClear", "LaneClear"));
-            Menu LasthitMenu = Menu.AddSubMenu(new Menu("Last Hit", "lasthit"));
             Menu MiscMenu = Menu.AddSubMenu(new Menu("Misc", "Misc"));
             Menu DrawMenu = Menu.AddSubMenu(new Menu("Drawing", "Draw"));
-            
 
+
+            HitMenu.AddItem(new MenuItem("LH", "Use Q").SetValue(new KeyBind('G', KeyBindType.Toggle, true)));
 
             HarassMenu.AddItem(new MenuItem("QH", "Use Q").SetValue(true));
             HarassMenu.AddItem(new MenuItem("EH", "Use E").SetValue(true));
@@ -89,7 +90,6 @@ namespace RyzeVnG
             LaneMenu.AddItem(new MenuItem("BL", "Burster").SetValue(true));
             LaneMenu.AddItem(new MenuItem("Mana", "Mana Manager").SetValue(new Slider(0, 0, 100)));
 
-            LasthitMenu.AddItem(new MenuItem("QL", "Q Last Hit").SetValue(new KeyBind('T',KeyBindType.Toggle,false)));
 
             MiscMenu.AddItem(new MenuItem("GapW", "W on AntiGap with smooth combo").SetValue(true));
             MiscMenu.AddItem(new MenuItem("FGapW","Force W Gapcloser").SetValue(false));
@@ -483,11 +483,13 @@ namespace RyzeVnG
                     }
                 }
             }
-            if(Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
-                if (TargetM != null && Menu.SubMenu("lasthit").Item("QL").GetValue<KeyBind>().Active)
+            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
+            {
+                var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.NotAlly);
+                if (LM != null && Menu.SubMenu("LH").Item("LH").GetValue<KeyBind>().Active)
                 {
                     Orbwalker.SetAttack(false);
-                    foreach (var minion in TargetM)
+                    foreach (var minion in LM)
                     {
                         if (Ryzepassivecharged == null && Stack < 4)
                         {
@@ -507,6 +509,7 @@ namespace RyzeVnG
                     }
                     Orbwalker.SetAttack(true);
                 }
+            }
         }
         public static void Beforeattack(Orbwalking.BeforeAttackEventArgs args)
         {
