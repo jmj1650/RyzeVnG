@@ -94,8 +94,6 @@ namespace RyzeVnG
             MiscMenu.AddItem(new MenuItem("GapW", "W on AntiGap with smooth combo").SetValue(true));
             MiscMenu.AddItem(new MenuItem("FGapW","Force W Gapcloser").SetValue(false));
             MiscMenu.AddItem(new MenuItem("EC", "combo logic").SetValue(true)); ;
-            MiscMenu.AddItem(new MenuItem("SC", "Smart Stack Charger").SetValue(new KeyBind('G',KeyBindType.Toggle,true)));
-            MiscMenu.AddItem(new MenuItem("Mana", "Stack Charger Mana Manager").SetValue(new Slider(70, 0, 100)));
 
             DrawMenu.AddItem(new MenuItem("DAO", "Draw All Off").SetValue(false));
             DrawMenu.AddItem(new MenuItem("QD", "Draw Q").SetValue(true));
@@ -507,64 +505,6 @@ namespace RyzeVnG
                             {
                                 Q.Cast(minion, true);
                             }
-                        }
-                    }
-                }
-            }
-            if (Menu.SubMenu("Misc").Item("Mana").GetValue<Slider>().Value < Player.ManaPercent && Menu.SubMenu("Misc").Item("SC").GetValue<KeyBind>().Active && (Q.Level > 0 && W.Level > 0 && E.Level > 0))
-            {
-                var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-                if (W.IsReady() && E.IsReady() && R.IsReady() && (Stack == 0 || (Stack == 1 && RyzePassive.EndTime - Game.ClockTime < 0.8)) && R.Level > 0 && Ryzepassivecharged == null)
-                {
-                    if (LM != null)
-                    {
-                        foreach (var minion in TargetM)
-                        {
-                                if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
-                                    if(Q.IsReady())
-                                    {
-                                        Q.Cast(minion, true);
-                                    }
-                                else if(Q.IsReady())
-                                {
-                                    Q.Cast(Game.CursorPos);
-                                }
-                        }
-                    }
-                }
-                if ((W.IsReady() || R.IsReady()) && E.IsReady() && (Stack == 1 || Stack == 2) && RyzePassive.EndTime - Game.ClockTime < 0.8 && Ryzepassivecharged == null)
-                {
-                    if (LM != null)
-                    {
-                        foreach (var minion in TargetM)
-                        {
-                            if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
-                                if (Q.IsReady())
-                                {
-                                    Q.Cast(minion, true);
-                                }
-                                else if (Q.IsReady())
-                                {
-                                    Q.Cast(Game.CursorPos);
-                                }
-                        }
-                    }
-                }
-                if ((W.IsReady() || R.IsReady() || (E.IsReady() && (R.Cooldown < 7.5 || W.Cooldown < 7.5)) && Stack == 2) || ((W.IsReady() || R.IsReady()) || (E.IsReady() && (R.Cooldown < 5.0 || W.Cooldown < 5.0) && Stack == 3)) && RyzePassive.EndTime - Game.ClockTime < 0.8 && Ryzepassivecharged == null)
-                {
-                    if (LM != null)
-                    {
-                        foreach (var minion in TargetM)
-                        {
-                            if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
-                                if (Q.IsReady())
-                                {
-                                    Q.Cast(minion, true);
-                                }
-                                else if (Q.IsReady())
-                                {
-                                    Q.Cast(Game.CursorPos);
-                                }
                         }
                     }
                 }
