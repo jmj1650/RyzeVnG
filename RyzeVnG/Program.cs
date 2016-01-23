@@ -508,10 +508,10 @@ namespace RyzeVnG
                     }
                 }
             }
-            if (Menu.SubMenu("Misc").Item("Mana").GetValue<Slider>().Value > Player.ManaPercent && Menu.SubMenu("Misc").Item("SC").GetValue<KeyBind>().Active)
+            if (Menu.SubMenu("Misc").Item("Mana").GetValue<Slider>().Value < Player.ManaPercent && Menu.SubMenu("Misc").Item("SC").GetValue<KeyBind>().Active && (Q.Level > 0 && W.Level > 0 && E.Level > 0))
             {
                 var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.Health);
-                if (W.IsReady() && E.IsReady() && R.IsReady() && (Stack == 0 || Stack == 1) && RyzePassive.EndTime - Game.ClockTime < 0.8)
+                if (W.IsReady() && E.IsReady() && R.IsReady() && (Stack == 0 || Stack == 1) && RyzePassive.EndTime - Game.ClockTime < 0.8 && R.Level > 0)
                 {
                     if (LM != null)
                     {
