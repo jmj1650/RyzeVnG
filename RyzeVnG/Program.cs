@@ -73,14 +73,14 @@ namespace RyzeVnG
             TargetSelector.AddToMenu(ts);
             Menu ComboMenu = Menu.AddSubMenu(new Menu("ComboSpeed", "Combospd"));
             Menu HarassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
-            // Menu HitMenu = Menu.AddSubMenu(new Menu("Last Hit", "LH"));
+            Menu HitMenu = Menu.AddSubMenu(new Menu("Last Hit", "LH"));
             Menu LaneMenu = Menu.AddSubMenu(new Menu("Lane/ JungleClear", "LaneClear"));
             Menu StackMenu = Menu.AddSubMenu(new Menu("Smart Stack Charger", "stack"));
             Menu MiscMenu = Menu.AddSubMenu(new Menu("Misc", "Misc"));
             Menu DrawMenu = Menu.AddSubMenu(new Menu("Drawing", "Draw"));
 
 
-            // HitMenu.AddItem(new MenuItem("LH", "Use Q").SetValue(new KeyBind('G', KeyBindType.Toggle, true)));
+            HitMenu.AddItem(new MenuItem("LH", "Use Q").SetValue(new KeyBind('G', KeyBindType.Toggle, true)));
             StackMenu.AddItem(new MenuItem("SC","Use Q").SetValue(new KeyBind('U',KeyBindType.Toggle,false)));
             StackMenu.AddItem(new MenuItem("Mana","Mana Manager").SetValue(new Slider(75,0,100)));
 
@@ -118,6 +118,7 @@ namespace RyzeVnG
             Orbwalking.BeforeAttack += Beforeattack;
             Orbwalking.AfterAttack += Afterattack;
             Obj_AI_Base.OnProcessSpellCast += OnProcessSpell;
+            Orbwalking.OnNonKillableMinion += OnNonKillableMinion;
 
 
             Notifications.AddNotification("RyzeVnG", 5000);
@@ -535,9 +536,8 @@ namespace RyzeVnG
               }
              */
         }
-        private static void Afterattack(AttackableUnit A, AttackableUnit B)
+        private static void OnNonKillableMinion(AttackableUnit A)
         {
-          /*  TickCount(750);
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
                 var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.NotAlly);
@@ -563,7 +563,10 @@ namespace RyzeVnG
                     }
                     Orbwalker.SetAttack(true);
                 }
-            } */
+            }
+        }
+        private static void Afterattack(AttackableUnit A, AttackableUnit B)
+        {
         }
 
         public static void Drawing_OnDraw(EventArgs args)
