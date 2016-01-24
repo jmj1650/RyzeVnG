@@ -28,9 +28,11 @@ namespace RyzeVnG
 
         public static BuffInstance RyzePassive, Ryzepassivecharged;
 
+        public static bool Buff_Recall;
+
         public static int Stack = 0;
 
-        public static float SpeedTime = 0;
+        public static float SpeedTime = 0, Recall_Time = 0;
 
         public static double RyzeQ(Obj_AI_Base Target)
         {
@@ -71,13 +73,16 @@ namespace RyzeVnG
             TargetSelector.AddToMenu(ts);
             Menu ComboMenu = Menu.AddSubMenu(new Menu("ComboSpeed", "Combospd"));
             Menu HarassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
-            Menu HitMenu = Menu.AddSubMenu(new Menu("Last Hit", "LH"));
+            // Menu HitMenu = Menu.AddSubMenu(new Menu("Last Hit", "LH"));
             Menu LaneMenu = Menu.AddSubMenu(new Menu("Lane/ JungleClear", "LaneClear"));
             Menu MiscMenu = Menu.AddSubMenu(new Menu("Misc", "Misc"));
             Menu DrawMenu = Menu.AddSubMenu(new Menu("Drawing", "Draw"));
+            Menu StackMenu = Menu.AddSubMenu(new Menu("Smart Stack Charger", "stack"));
 
 
-            HitMenu.AddItem(new MenuItem("LH", "Use Q").SetValue(new KeyBind('G', KeyBindType.Toggle, true)));
+            // HitMenu.AddItem(new MenuItem("LH", "Use Q").SetValue(new KeyBind('G', KeyBindType.Toggle, true)));
+            StackMenu.AddItem(new MenuItem("SC","Use Q").SetValue(new KeyBind('U',KeyBindType.Toggle,false)));
+            StackMenu.AddItem(new MenuItem("Mana","Mana Manager").SetValue(new Slider(75,0,100)));
 
             HarassMenu.AddItem(new MenuItem("QH", "Use Q").SetValue(true));
             HarassMenu.AddItem(new MenuItem("EH", "Use E").SetValue(true));
@@ -111,6 +116,7 @@ namespace RyzeVnG
             Drawing.OnDraw += Drawing_OnDraw;
             Game.OnUpdate += Game_OnUpdate;
             Orbwalking.BeforeAttack += Beforeattack;
+            Orbwalking.AfterAttack += Afterattack;
             Obj_AI_Base.OnProcessSpellCast += OnProcessSpell;
 
 
@@ -129,12 +135,17 @@ namespace RyzeVnG
             var TargetE = TargetSelector.GetTarget(600, TargetSelector.DamageType.Magical);
             var Target = TargetSelector.GetTarget(800, TargetSelector.DamageType.Magical);
             var TargetM = MinionManager.GetMinions(600, MinionTypes.All, MinionTeam.NotAlly);
+            var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.NotAlly);
             var QL = Menu.SubMenu("LaneClear").Item("QL").GetValue<bool>();
             var WL = Menu.SubMenu("LaneClear").Item("WL").GetValue<bool>();
             var EL = Menu.SubMenu("LaneClear").Item("EL").GetValue<bool>();
             var RL = Menu.SubMenu("LaneClear").Item("RL").GetValue<bool>();
             var BL = Menu.SubMenu("LaneClear").Item("BL").GetValue<bool>();
             var EC = Menu.SubMenu("Misc").Item("EC").GetValue<bool>();
+            Buff_Recall = ObjectManager.Player.IsRecalling();
+
+            if (Buff_Recall)
+                Recall_Time = TickCount(1000);
 
             if (RyzePassive != null)
             {
@@ -190,22 +201,22 @@ namespace RyzeVnG
                                 R.CastOnUnit(Player);
                                 return;
                             }
-                            if (Q.IsReady() && E.IsReady() && W.IsReady() && R.IsReady() && TargetW.IsValidTarget(W.Range) && Stack == 2)
+                            if (Stack == 2)
                             {
-                                if (Q.IsReady())
+                                if (W.IsReady() && R.IsReady() && TargetW.IsValidTarget(W.Range))
                                 {
-                                    W.CastOnUnit(TargetW);
-                                    Q.CastOnUnit(TargetW);
-                                    E.CastOnUnit(TargetW);
-                                    Q.CastOnUnit(TargetW);
-                                    R.CastOnUnit(Player);
-                                    Q.CastOnUnit(TargetW);
-                                    E.CastOnUnit(TargetW);
-                                    Q.CastOnUnit(TargetW);
-                                    return;
+                                    if (Q.IsReady())
+                                    {
+                                        W.CastOnUnit(TargetW);
+                                        Q.CastOnUnit(TargetW);
+                                        R.CastOnUnit(Player);
+                                        Q.CastOnUnit(TargetW);
+                                        E.CastOnUnit(TargetW);
+                                        Q.CastOnUnit(TargetW);
+                                        return;
+                                    }
                                 }
                             }
-
                             if (W.IsReady() && TargetW.IsValidTarget(W.Range) && (Stack <= 2 || (Stack == 3 && Q.IsReady() && (E.Cooldown <= 3.0 || R.Cooldown <= 3.0)) || (Stack == 4 && (E.Cooldown <= 5.5 || R.Cooldown <= 5.5))))
                                 W.CastOnUnit(TargetW);
                             if (E.IsReady() && TargetW.IsValidTarget(W.Range) && (Stack <= 2 || (((Stack == 3 && Q.IsReady()) || Stack == 4) && ((W.Cooldown < 3.0 || R.Cooldown < 3.0) || ((W.Cooldown < 5.5 || R.Cooldown < 5.5) && Q.Cooldown < 2.6)))))
@@ -483,12 +494,53 @@ namespace RyzeVnG
                     }
                 }
             }
+            if(Q.Level > 0 && W.Level > 0 && E.Level > 0)
+              if(Menu.SubMenu("stack").Item("SC").GetValue<KeyBind>().Active)
+                 if (Menu.SubMenu("stack").Item("Mana").GetValue<Slider>().Value < Player.ManaPercent)
+                    if(Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.None)
+                       if (Ryzepassivecharged == null)
+                          if (Stack < 4)
+                              if (RyzePassive == null ? true : RyzePassive.EndTime - Game.ClockTime < 0.6)
+                              {
+                                  if (Recall_Time > Environment.TickCount)
+                                      return;
+                                  if (Stack > 1 && W.IsReady() && E.IsReady() && R.IsReady())
+                                      return;
+                                  if (Stack > 2 && (W.IsReady() && (E.IsReady() || R.IsReady())))
+                                      return;
+                                  if (LM != null)
+                                  {
+                                      foreach (var minion in LM)
+                                          if (Ryzepassivecharged == null && Stack < 4)
+                                              if (minion.Health < RyzeQ(minion) && minion.IsValidTarget(Q.Range))
+                                                  Q.Cast(minion, true);
+                                  }
+                                  if(Q.IsReady())
+                                      Q.Cast(Game.CursorPos);
+                              }
+        }
+        public static void Beforeattack(Orbwalking.BeforeAttackEventArgs args)
+        {
+            /*  if (args.Unit.IsMe)
+              {
+                  if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
+                  {
+                      if (Q.IsReady() || W.IsReady() || E.IsReady())
+                          args.Process = false;
+                      else
+                          args.Process = true;
+                  }
+              }
+             */
+        }
+        private static void Afterattack(AttackableUnit A, AttackableUnit B)
+        {
+          /*  TickCount(750);
             if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LastHit)
             {
                 var LM = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.NotAlly);
                 if (LM != null && Menu.SubMenu("LH").Item("LH").GetValue<KeyBind>().Active)
                 {
-                    Orbwalker.SetAttack(false);
                     foreach (var minion in LM)
                     {
                         if (Ryzepassivecharged == null && Stack < 4)
@@ -509,21 +561,7 @@ namespace RyzeVnG
                     }
                     Orbwalker.SetAttack(true);
                 }
-            }
-        }
-        public static void Beforeattack(Orbwalking.BeforeAttackEventArgs args)
-        {
-            /*  if (args.Unit.IsMe)
-              {
-                  if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo)
-                  {
-                      if (Q.IsReady() || W.IsReady() || E.IsReady())
-                          args.Process = false;
-                      else
-                          args.Process = true;
-                  }
-              }
-             */
+            } */
         }
 
         public static void Drawing_OnDraw(EventArgs args)
