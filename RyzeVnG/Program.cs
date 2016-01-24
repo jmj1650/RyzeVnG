@@ -75,9 +75,9 @@ namespace RyzeVnG
             Menu HarassMenu = Menu.AddSubMenu(new Menu("Harass", "Harass"));
             // Menu HitMenu = Menu.AddSubMenu(new Menu("Last Hit", "LH"));
             Menu LaneMenu = Menu.AddSubMenu(new Menu("Lane/ JungleClear", "LaneClear"));
+            Menu StackMenu = Menu.AddSubMenu(new Menu("Smart Stack Charger", "stack"));
             Menu MiscMenu = Menu.AddSubMenu(new Menu("Misc", "Misc"));
             Menu DrawMenu = Menu.AddSubMenu(new Menu("Drawing", "Draw"));
-            Menu StackMenu = Menu.AddSubMenu(new Menu("Smart Stack Charger", "stack"));
 
 
             // HitMenu.AddItem(new MenuItem("LH", "Use Q").SetValue(new KeyBind('G', KeyBindType.Toggle, true)));
