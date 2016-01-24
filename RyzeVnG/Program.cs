@@ -195,19 +195,21 @@ namespace RyzeVnG
                         {
                             if (Q.IsReady() && W.IsReady() && E.IsReady() && R.IsReady() && TargetQ.IsValidTarget(W.Range) && Stack == 1)
                             {
-                                W.CastOnUnit(TargetW);
+                                R.CastOnUnit(Player);
                                 E.CastOnUnit(TargetE);
                                 Q.CastOnUnit(TargetQ);
-                                R.CastOnUnit(Player);
+                                W.CastOnUnit(TargetW);
                                 return;
                             }
                             if (Stack == 2)
                             {
-                                if (W.IsReady() && R.IsReady() && TargetW.IsValidTarget(W.Range))
+                                if (E.IsReady() && W.IsReady() && R.IsReady() && TargetW.IsValidTarget(W.Range))
                                 {
                                     if (Q.IsReady())
                                     {
                                         W.CastOnUnit(TargetW);
+                                        Q.CastOnUnit(TargetW);
+                                        E.CastOnUnit(TargetW);
                                         Q.CastOnUnit(TargetW);
                                         R.CastOnUnit(Player);
                                         Q.CastOnUnit(TargetW);
